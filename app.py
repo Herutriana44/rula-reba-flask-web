@@ -14,6 +14,9 @@ import datetime
 import requests
 from collections import deque
 from pyngrok import ngrok
+import tempfile
+from werkzeug.utils import secure_filename
+from video_processor import VideoProcessor
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -30,9 +33,95 @@ hands = mp_hands.Hands()
 pose = mp_pose.Pose()
 mp_drawing = mp.solutions.drawing_utils
 
+# Create upload folders
 UPLOAD_FOLDER = 'static/uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+VIDEO_UPLOAD_FOLDER = 'static/video_uploads'
+for folder in [UPLOAD_FOLDER, VIDEO_UPLOAD_FOLDER]:
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def process_video_frame(frame, analysis_type, weight=None):
+    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = pose.process(image_rgb)
+    results_hands = hands.process(image_rgb)
+    
+    pose1 = []
+    rwl = []
+    li = []
+    
+    if results.pose_landmarks:
+        h, w, c = image_rgb.shape
+        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        
+        for id, lm in enumerate(results.pose_landmarks.landmark):
+            x_y_z = [lm.x, lm.y, lm.z, lm.visibility]
+            pose1.append(x_y_z)
+            cx, cy = int(lm.x * w), int(lm.y * h)
+            color = (255, 0, 0) if id % 2 == 0 else (255, 0, 255)
+            cv2.circle(frame, (cx, cy), 5, color, cv2.FILLED)
+    
+    results = {}
+    
+    try:
+        if analysis_type in ['rula', 'reba']:
+            rula, reba = angle_calc(pose1)
+            if rula != "NULL":
+                results['rula'] = rula
+                results['rula_risk'] = risk_level(rula)
+            if reba != "NULL":
+                results['reba'] = reba
+                results['reba_risk'] = risk_level(reba)
+                
+        elif analysis_type == 'niosh' and weight is not None:
+            niosh_score = NIOSHCalc([results, results_hands], [results, results_hands], load_weight=float(weight)).calculate_RWL_LI()
+            results['rwl'] = niosh_score['RWL']
+            results['li'] = niosh_score['LI']
+            results['li_risk'] = niosh_risk_level(results['li'])
+            
+    except Exception as e:
+        print(f"Error processing frame: {e}")
+    
+    return frame, results
+
+@app.route('/video-upload')
+def video_upload_page():
+    return render_template('video_upload.html')
+
+@app.route('/process-video', methods=['POST'])
+def process_video():
+    if 'video' not in request.files:
+        return jsonify({'error': 'No video file provided'}), 400
+    
+    video_file = request.files['video']
+    analysis_type = request.form.get('analysisType', 'rula')
+    weight = request.form.get('weight')
+    
+    if video_file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    # Initialize video processor
+    video_processor = VideoProcessor(VIDEO_UPLOAD_FOLDER)
+    
+    # Process the video
+    result, error = video_processor.process_video(
+        video_file, 
+        analysis_type, 
+        weight,
+        pose=pose,
+        hands=hands,
+        mp_drawing=mp_drawing,
+        mp_pose=mp_pose
+    )
+    
+    if error:
+        return jsonify({'error': error}), 400
+    
+    return jsonify(result)
 
 import random
 import string

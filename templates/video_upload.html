@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Video Upload - Ergonomic Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-form {
+            margin: 20px 0;
+        }
+
+        .video-preview {
+            margin: 20px 0;
+            max-width: 100%;
+        }
+
+        .video-preview video {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .analysis-type {
+            margin: 20px 0;
+        }
+
+        .analysis-type select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Video Upload for Ergonomic Analysis</h1>
+
+        <div class="upload-form">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="analysis-type">
+                    <label for="analysisType">Select Analysis Type:</label>
+                    <select id="analysisType" name="analysisType">
+                        <option value="rula">RULA Analysis</option>
+                        <option value="reba">REBA Analysis</option>
+                        <option value="niosh">NIOSH Analysis</option>
+                    </select>
+                </div>
+
+                <div id="weightInput" style="display: none;">
+                    <label for="weight">Load Weight (kg):</label>
+                    <input type="number" id="weight" name="weight" min="0" step="0.1">
+                </div>
+
+                <div>
+                    <label for="videoFile">Select Video File:</label>
+                    <input type="file" id="videoFile" name="video" accept="video/*" required>
+                </div>
+
+                <button type="submit" class="btn">Upload and Analyze</button>
+            </form>
+        </div>
+
+        <div class="video-preview">
+            <h3>Video Preview</h3>
+            <video id="preview" controls style="display: none;"></video>
+        </div>
+
+        <div class="results" id="results">
+            <h3>Analysis Results</h3>
+            <div id="analysisResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide weight input based on analysis type
+        document.getElementById('analysisType').addEventListener('change', function () {
+            const weightInput = document.getElementById('weightInput');
+            weightInput.style.display = this.value === 'niosh' ? 'block' : 'none';
+        });
+
+        // Video preview
+        document.getElementById('videoFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const preview = document.getElementById('preview');
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            }
+        });
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const videoFile = document.getElementById('videoFile').files[0];
+            const analysisType = document.getElementById('analysisType').value;
+
+            formData.append('video', videoFile);
+            formData.append('analysisType', analysisType);
+
+            if (analysisType === 'niosh') {
+                const weight = document.getElementById('weight').value;
+                formData.append('weight', weight);
+            }
+
+            try {
+                const response = await fetch('/process-video', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                // Display results
+                const resultsDiv = document.getElementById('results');
+                const analysisResults = document.getElementById('analysisResults');
+
+                resultsDiv.style.display = 'block';
+                analysisResults.innerHTML = `
+                    <p>Analysis Type: ${analysisType.toUpperCase()}</p>
+                    ${result.rula ? `<p>RULA Score: ${result.rula}</p>` : ''}
+                    ${result.reba ? `<p>REBA Score: ${result.reba}</p>` : ''}
+                    ${result.rwl ? `<p>RWL: ${result.rwl} kg</p>` : ''}
+                    ${result.li ? `<p>LI: ${result.li}</p>` : ''}
+                    ${result.rula_risk ? `<p>RULA Risk: ${result.rula_risk}</p>` : ''}
+                    ${result.reba_risk ? `<p>REBA Risk: ${result.reba_risk}</p>` : ''}
+                    ${result.li_risk ? `<p>NIOSH Risk: ${result.li_risk}</p>` : ''}
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during video processing');
+            }
+        });
+    </script>
+</body>
+
+</html>
