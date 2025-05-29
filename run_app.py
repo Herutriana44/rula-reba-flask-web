@@ -1,6 +1,12 @@
 import os
 from pyngrok import ngrok, conf
-from app import app, socketio
+from app import (
+    app, 
+    socketio, 
+    gen_frames_niosh, 
+    gen_frames_rula, 
+    gen_frames_reba
+)
 
 def run_app():
     try:
