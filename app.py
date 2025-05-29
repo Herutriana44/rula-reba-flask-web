@@ -22,10 +22,6 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Set up ngrok
-http_tunnel = ngrok.connect(5000)
-print(f' * Public URL: {http_tunnel.public_url}')
-
 # Initialize MediaPipe
 mp_pose = mp.solutions.pose
 mp_hands = mp.solutions.hands
