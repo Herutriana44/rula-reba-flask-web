@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIOSH Lifting Equation Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    {% if cond == "rula" %}
+    <script>
+        var socket = io();
+        socket.on('rula_reba', function(data) {
+            // Update tampilan HTML berdasarkan data yang diterima
+            // console.log(data.rula);
+            // console.log(data.reba);
+
+            document.getElementById('rula_score').textContent = data.rula;
+            // document.getElementById('reba_score').textContent = data.reba;
+            document.getElementById('rula_risk').textContent = data.rula_risk;
+            // document.getElementById('reba_risk').textContent = data.reba_risk;
+        });
+    </script>
+    <h1>Biomechanic Posture System RULA</h1>
+    <img src="{{ url_for('video_feed_rula') }}" width="720" height="480">
+    <p>Rapid Upper Limb Assessment Score: <span id="rula_score">4</span></p>
+    <p>RULA Risk : <span id="rula_risk"></span></p>
+    <!-- <p>Rapid Entire Body Score: <span id="reba_score">3</span></p>
+    <p>REBA Risk : <span id="reba_risk"></span></p> -->
+    {% elif cond == "reba" %}
+    <script>
+        var socket = io();
+        socket.on('rula_reba', function(data) {
+            // Update tampilan HTML berdasarkan data yang diterima
+            // console.log(data.rula);
+            // console.log(data.reba);
+
+            // document.getElementById('rula_score').textContent = data.rula;
+            document.getElementById('reba_score').textContent = data.reba;
+            // document.getElementById('rula_risk').textContent = data.rula_risk;
+            document.getElementById('reba_risk').textContent = data.reba_risk;
+        });
+    </script>
+    <h1>Biomechanic Posture System</h1>
+    <img src="{{ url_for('video_feed_reba') }}" width="720" height="480">
+    <p>Rapid Entire Body Score: <span id="reba_score">3</span></p>
+    <p>REBA Risk : <span id="reba_risk"></span></p>
+    {% else %}
+    <script>
+        var socket = io();
+        socket.on('rula_reba', function(data) {
+            // Update tampilan HTML berdasarkan data yang diterima
+            // console.log(data.rula);
+            // console.log(data.reba);
+            document.getElementById('rwl').textContent = data.rwl;
+            document.getElementById('li').textContent = data.li;
+            document.getElementById('li_risk').textContent = data.li_risk;
+        });
+    </script>
+    <h1>Biomechanic Posture System</h1>
+    
+    <img src="{{ url_for('video_feed_niosh', bobot=bobot) }}" width="720" height="480">
+    <p>RWL : <span id="rwl"></span></p>
+    <p>LI : <span id="li"></span></p>
+    <p>LI Risk : <span id="li_risk"></span></p>
+    {% endif %}
+</body>
+</html>

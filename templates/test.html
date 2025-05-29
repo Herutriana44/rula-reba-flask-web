@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture</title>
+</head>
+<body>
+    <h1>Camera Capture</h1>
+    <video id="video" width="640" height="480" autoplay style="background-color: grey"></video>
+    <button id="snap">Take Photo</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+    <!-- Form untuk mengirim gambar ke server -->
+    <form id="photo-form" method="POST" action="{{ url_for('save_photo') }}">
+        <input type="hidden" name="image_data" id="image_data">
+    </form>
+
+    <script>
+        // Elements for taking the snapshot
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+
+        // Get access to the camera
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                video.srcObject = stream;
+                video.play();
+            });
+        }
+
+        // Trigger photo take
+        document.getElementById("snap").addEventListener("click", function() {
+            // Copy video frame to canvas
+            context.drawImage(video, 0, 0, 640, 480);
+
+            // Convert canvas to base64 image data
+            var imageData = canvas.toDataURL("image/png");
+
+            // Set the image data into the hidden input field
+            document.getElementById('image_data').value = imageData;
+
+            // Submit the form to send the image data to the server
+            document.getElementById('photo-form').submit();
+        });
+    </script>
+</body>
+</html>

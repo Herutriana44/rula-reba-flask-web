@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captured Photo</title>
+</head>
+<body>
+    <h1>Captured Photo</h1>
+    <img src="{{ image_path }}" alt="Captured Image" width="640" height="480">
+    <br><br>
+    <a href="{{ url_for('index') }}">Take Another Photo</a>
+
+    <script>
+        console.log(res);
+    </script>
+    {% if res %}
+    <p>Rapid Upper Limb Assessment Score: <span id="rula_score">{{ res['rula'] }}</span></p>
+    <p>RULA Risk : <span id="rula_risk">{{ res['rula_risk'] }}</span></p>
+    <p>Rapid Entire Body Score: <span id="reba_score">{{ res['reba'] }}</span></p>
+    <p>REBA Risk : <span id="reba_risk">{{ res['reba_risk'] }}</span></p>
+    <p>RWL : <span>{{res['rwl']}}</span></p>
+    <p>LI : <span>{{res['li']}}</span></p>
+    {% else %}
+    <p>No results available</p>
+    {% endif %}
+</body>
+</html>

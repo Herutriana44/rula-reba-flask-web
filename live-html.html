@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Hand Gesture Detection</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        var socket = io();
+        socket.on('new_data', function(data) {
+            // Update tampilan HTML berdasarkan data yang diterima
+            console.log(data.landmark);
+        });
+    </script>
+</head>
+<body>
+    <video id="video" autoplay></video>
+    <div id="landmark-data"></div>
+</body>
+</html>
